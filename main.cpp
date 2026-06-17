@@ -5,7 +5,7 @@
 using namespace std;
 using namespace cv;
 
-// Função simples para imprimir o menu no terminal
+// Função para imprimir o menu no terminal do Debian
 void exibirMenu() {
     cout << "\n=============================================\n";
     cout << "      MENU DE INTERACAO - SOTC REMASTER      \n";
@@ -36,9 +36,11 @@ int main() {
     if (fps <= 0) fps = 30.0;
 
     const int larguraProc = 960;
-    const int larguraExibicao = 1920;
+    // Largura de exibição para uma única tela (HD limpo e nítido)
+    const int larguraExibicao = 1280;
 
-    Mat frameOriginal, frameBase, frameProc, frameLado, frameFinal;
+    // Removemos o frameLado, pois não vamos mais juntar as imagens
+    Mat frameOriginal, frameBase, frameProc, frameFinal;
 
     namedWindow("SOTC Remaster", WINDOW_NORMAL | WINDOW_KEEPRATIO);
 
@@ -54,7 +56,7 @@ int main() {
     while (true) {
         video.read(frameOriginal);
 
-        // Se o video acabar, ele reinicia automaticamente pra você ter tempo de testar o menu
+        // Se o video acabar, ele reinicia automaticamente
         if (frameOriginal.empty()) {
             video.set(CAP_PROP_POS_FRAMES, 0);
             continue;
@@ -65,46 +67,39 @@ int main() {
         // A imagem processada começa exatamente igual à original
         frameProc = frameBase.clone();
 
-        // O SISTEMA DE ESCOLHA: Só aplica o filtro se a variável correspondente for verdadeira
+        // O SISTEMA DE ESCOLHA
         if (aplicarRuido) frameProc = filtros.removerRuido(frameProc);
         if (aplicarCores) frameProc = filtros.coresVivas(frameProc);
         if (aplicarContraste) frameProc = filtros.melhorarContraste(frameProc);
         if (aplicarNitidez) frameProc = filtros.nitidez(frameProc);
 
-        hconcat(frameBase, frameProc, frameLado);
+        // Agora redimensionamos direto o frame processado para a tela final (sem juntar lado a lado)
+        resize(frameProc, frameFinal, Size(larguraExibicao, (int)(frameProc.rows * (double)larguraExibicao / frameProc.cols)));
 
-        resize(frameLado, frameFinal, Size(larguraExibicao, (int)(frameLado.rows * (double)larguraExibicao / frameLado.cols)));
-
-        putText(frameFinal, "ORIGINAL", Point(30, 50), FONT_HERSHEY_SIMPLEX, 1.2, Scalar(255, 255, 255), 2);
-        putText(frameFinal, "PROCESSADO", Point((larguraExibicao / 2) + 30, 50), FONT_HERSHEY_SIMPLEX, 1.2, Scalar(0, 255, 0), 2);
-
-        // Feedback visual na tela para o professor ver quais filtros você escolheu
+        // Status dos filtros na tela
         string statusFiltros = "Filtros Ativos: ";
-        if (!aplicarRuido && !aplicarCores && !aplicarContraste && !aplicarNitidez) statusFiltros += "NENHUM";
+        if (!aplicarRuido && !aplicarCores && !aplicarContraste && !aplicarNitidez) statusFiltros += "NENHUM (Video Original)";
         if (aplicarRuido) statusFiltros += "Ruido | ";
         if (aplicarCores) statusFiltros += "Cores | ";
         if (aplicarContraste) statusFiltros += "Contraste | ";
         if (aplicarNitidez) statusFiltros += "Nitidez";
 
-        putText(frameFinal, statusFiltros, Point((larguraExibicao / 2) + 30, 100), FONT_HERSHEY_SIMPLEX, 0.8, Scalar(0, 255, 255), 2);
+        // Coloquei o texto no canto superior esquerdo pra ficar elegante
+        putText(frameFinal, statusFiltros, Point(20, 40), FONT_HERSHEY_SIMPLEX, 0.7, Scalar(0, 255, 255), 2);
 
         imshow("SOTC Remaster", frameFinal);
 
         // MENU INTERATIVO: Captura qual tecla o usuário apertou
         char tecla = (char)waitKey(1000 / (fps * 1.30));
 
-        // Encerra o programa de forma adequada
-        if (tecla == 27) { // 27 é o código da tecla ESC
+        if (tecla == 27) { // ESC
             cout << "Encerrando o programa de forma adequada..." << endl;
             break;
         }
-        // Alterna os filtros (se tava ligado, desliga; se tava desligado, liga)
         else if (tecla == '1') aplicarRuido = !aplicarRuido;
         else if (tecla == '2') aplicarCores = !aplicarCores;
         else if (tecla == '3') aplicarContraste = !aplicarContraste;
         else if (tecla == '4') aplicarNitidez = !aplicarNitidez;
-
-        // Atalhos rapidos
         else if (tecla == '5') aplicarRuido = aplicarCores = aplicarContraste = aplicarNitidez = true;
         else if (tecla == '0') aplicarRuido = aplicarCores = aplicarContraste = aplicarNitidez = false;
     }
