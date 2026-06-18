@@ -5,105 +5,92 @@
 using namespace std;
 using namespace cv;
 
-// Função para imprimir o menu no terminal do Debian
 void exibirMenu() {
     cout << "\n=============================================\n";
-    cout << "      MENU DE INTERACAO - SOTC REMASTER      \n";
+    cout << "      ENGINE DE REMASTERIZACAO - SOTC        \n";
     cout << "=============================================\n";
-    cout << "Controles durante a exibicao do video:\n";
-    cout << " [1] - Ativar/Desativar: Remocao de Ruido\n";
-    cout << " [2] - Ativar/Desativar: Cores Vivas\n";
-    cout << " [3] - Ativar/Desativar: Melhorar Contraste\n";
-    cout << " [4] - Ativar/Desativar: Nitidez\n";
-    cout << " [5] - Ligar TODOS os filtros (HD Completo)\n";
-    cout << " [0] - Desligar TODOS os filtros\n";
-    cout << " [ESC] - Encerrar o programa adequadamente\n";
+    cout << " [1] - Ruído \n";
+    cout << " [2] - Cores  \n";
+    cout << " [3] - Contraste\n";
+    cout << " [4] - Nitidez\n";
+    cout << " [5] - ATIVAR TUDO \n";
+    cout << " [0] - DESLIGAR TUDO  \n";
+    cout << " [ESC] - Sair\n";
     cout << "=============================================\n";
 }
 
 int main() {
     Filtros filtros;
-
-    // Caminho do arquivo de vídeo
+    //Caminho do video
     VideoCapture video("/home/gean/CLionProjects/TrabalhoFinal/VideoSOTC.mp4");
 
     if (!video.isOpened()) {
-        cerr << "Erro ao abrir o arquivo de vídeo!" << endl;
+        cerr << "[FATAL] Falha ao abrir stream de vídeo." << endl;
         return -1;
     }
 
-    double fps = video.get(CAP_PROP_FPS);
-    if (fps <= 0) fps = 30.0;
+    double fpsOriginal = video.get(CAP_PROP_FPS);
+    if (fpsOriginal <= 0) fpsOriginal = 30.0;
 
-    const int larguraProc = 960;
-    // Largura de exibição para uma única tela (HD limpo e nítido)
-    const int larguraExibicao = 1280;
+    double larguraOriginal = video.get(CAP_PROP_FRAME_WIDTH);
+    double alturaOriginal = video.get(CAP_PROP_FRAME_HEIGHT);
+    const int resolucaoHD = 1280;
+    Size tamanhoDisplay(resolucaoHD, (int)(alturaOriginal * resolucaoHD / larguraOriginal));
 
-    // Removemos o frameLado, pois não vamos mais juntar as imagens
-    Mat frameOriginal, frameBase, frameProc, frameFinal;
+    Mat frameOriginal, frameProc, frameFinal;
+    namedWindow("SOTC Remaster Engine", WINDOW_NORMAL | WINDOW_KEEPRATIO);
 
-    namedWindow("SOTC Remaster", WINDOW_NORMAL | WINDOW_KEEPRATIO);
+    bool apRuido = false, apCores = false, apContraste = false, apNitidez = false;
 
-    // VARIAVEIS DO MENU: Começam todas desligadas (false)
-    bool aplicarRuido = false;
-    bool aplicarCores = false;
-    bool aplicarContraste = false;
-    bool aplicarNitidez = false;
-
-    // Mostra o menu no terminal antes de abrir a janela
     exibirMenu();
+
+    int delay = 1000 / (fpsOriginal * 1.30);
 
     while (true) {
         video.read(frameOriginal);
 
-        // Se o video acabar, ele reinicia automaticamente
         if (frameOriginal.empty()) {
             video.set(CAP_PROP_POS_FRAMES, 0);
             continue;
         }
 
-        resize(frameOriginal, frameBase, Size(larguraProc, (int)(frameOriginal.rows * (double)larguraProc / frameOriginal.cols)));
+        resize(frameOriginal, frameProc, tamanhoDisplay, 0, 0, INTER_LINEAR);
 
-        // A imagem processada começa exatamente igual à original
-        frameProc = frameBase.clone();
+        if (apRuido) frameProc = filtros.removerRuido(frameProc);
+        if (apCores) frameProc = filtros.coresVivas(frameProc);
+        if (apContraste) frameProc = filtros.melhorarContraste(frameProc);
+        if (apNitidez) frameProc = filtros.nitidez(frameProc);
 
-        // O SISTEMA DE ESCOLHA
-        if (aplicarRuido) frameProc = filtros.removerRuido(frameProc);
-        if (aplicarCores) frameProc = filtros.coresVivas(frameProc);
-        if (aplicarContraste) frameProc = filtros.melhorarContraste(frameProc);
-        if (aplicarNitidez) frameProc = filtros.nitidez(frameProc);
+        frameFinal = frameProc.clone();
 
-        // Agora redimensionamos direto o frame processado para a tela final (sem juntar lado a lado)
-        resize(frameProc, frameFinal, Size(larguraExibicao, (int)(frameProc.rows * (double)larguraExibicao / frameProc.cols)));
+        // HUD Inferior
+        int hBar = 40;
+        Mat hud = frameFinal(Rect(0, frameFinal.rows - hBar, frameFinal.cols, hBar));
+        hud *= 0.25;
 
-        // Status dos filtros na tela
-        string statusFiltros = "Filtros Ativos: ";
-        if (!aplicarRuido && !aplicarCores && !aplicarContraste && !aplicarNitidez) statusFiltros += "NENHUM (Video Original)";
-        if (aplicarRuido) statusFiltros += "Ruido | ";
-        if (aplicarCores) statusFiltros += "Cores | ";
-        if (aplicarContraste) statusFiltros += "Contraste | ";
-        if (aplicarNitidez) statusFiltros += "Nitidez";
-
-        // Coloquei o texto no canto superior esquerdo pra ficar elegante
-        putText(frameFinal, statusFiltros, Point(20, 40), FONT_HERSHEY_SIMPLEX, 0.7, Scalar(0, 255, 255), 2);
-
-        imshow("SOTC Remaster", frameFinal);
-
-        // MENU INTERATIVO: Captura qual tecla o usuário apertou
-        char tecla = (char)waitKey(1000 / (fps * 1.30));
-
-        if (tecla == 27) { // ESC
-            cout << "Encerrando o programa de forma adequada..." << endl;
-            break;
+        string status = "STATUS: ";
+        if (!apRuido && !apCores && !apContraste && !apNitidez) {
+            status += "ORIGINAL";
+            putText(frameFinal, status, Point(20, frameFinal.rows - 12), 0, 0.6, Scalar(150, 150, 150), 2);
+        } else {
+            if (apRuido) status += "[1] Ruido ";
+            if (apCores) status += "[2] Cores ";
+            if (apContraste) status += "[3] Contraste ";
+            if (apNitidez) status += "[4] Nitidez ";
+            putText(frameFinal, status, Point(20, frameFinal.rows - 12), 0, 0.6, Scalar(0, 255, 150), 2);
         }
-        else if (tecla == '1') aplicarRuido = !aplicarRuido;
-        else if (tecla == '2') aplicarCores = !aplicarCores;
-        else if (tecla == '3') aplicarContraste = !aplicarContraste;
-        else if (tecla == '4') aplicarNitidez = !aplicarNitidez;
-        else if (tecla == '5') aplicarRuido = aplicarCores = aplicarContraste = aplicarNitidez = true;
-        else if (tecla == '0') aplicarRuido = aplicarCores = aplicarContraste = aplicarNitidez = false;
-    }
 
+        imshow("SOTC Remaster Engine", frameFinal);
+
+        char key = (char)waitKey(delay);
+        if (key == 27) break;
+        else if (key == '1') apRuido = !apRuido;
+        else if (key == '2') apCores = !apCores;
+        else if (key == '3') apContraste = !apContraste;
+        else if (key == '4') apNitidez = !apNitidez;
+        else if (key == '5') apRuido = apCores = apContraste = apNitidez = true;
+        else if (key == '0') apRuido = apCores = apContraste = apNitidez = false;
+    }
     video.release();
     destroyAllWindows();
     return 0;

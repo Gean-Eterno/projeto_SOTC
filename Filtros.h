@@ -7,10 +7,10 @@ using namespace cv;
 
 class Filtros {
 public:
-    Mat nitidez(const Mat& frame);
+    Mat removerRuido(const Mat& frame);
     Mat coresVivas(const Mat& frame);
     Mat melhorarContraste(const Mat& frame);
-    Mat removerRuido(const Mat& frame);
+    Mat nitidez(const Mat& frame);
 };
 
-#endif
+#endif // FILTROS_H
