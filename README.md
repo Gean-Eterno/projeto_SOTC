@@ -1,30 +1,58 @@
-PROJETO SHADOW OF THE COLOSSUS REMASTER - OPENCV
+# 🎮 SOTC Remaster Engine
 
-Descrição
-Este é um projeto de processamento digital de imagens desenvolvido em C++ utilizando a biblioteca OpenCV. O objetivo principal do sistema é aplicar técnicas matemáticas para simular a remasterização visual de um vídeo de gameplay do jogo Shadow of the Colossus. O programa melhora a nitidez, as cores e o contraste do vídeo rodando em tempo real, sem utilizar ferramentas de Inteligência Artificial.
+Este é um projeto acadêmico de Processamento Digital de Imagens (PDI) desenvolvido em **C++** utilizando a biblioteca **OpenCV**. O objetivo do software é simular uma *Engine* de remasterização em tempo real, aplicando algoritmos de aprimoramento visual a um vídeo de gameplay clássico (*Shadow of the Colossus*).
 
-Filtros Implementados no Pipeline
-O código lê o vídeo e passa os frames por uma esteira com quatro filtros processados em sequência:
+## 🚀 Funcionalidades e Pipeline de Filtros
 
-Remoção de Ruído: Utiliza o desfoque Gaussiano para limpar a imagem inicial e remover chuviscos e artefatos de compressão do vídeo original.
+O sistema processa o vídeo frame a frame e permite a ativação condicional de 4 filtros matemáticos avançados:
 
-Cores Vivas: O sistema converte a imagem para o espaço de cor LAB. Isso permite amplificar a saturação dos canais de cores de forma isolada, sem distorcer ou estourar a iluminação da cena.
+* **[1] Redução de Ruído:** Utiliza Filtro de Mediana aliado à Suavização Gaussiana para derreter granulações e artefatos de compressão, sem prejudicar a estrutura do cenário.
+* **[2] Expansão de Cores:** Atua de forma isolada no espaço de cor **HSV** (canal de Saturação), aplicando ganhos com *clipping* de segurança para evitar estourar a imagem.
+* **[3] Contraste Cinemático:** Utiliza transformação linear (Alpha e Beta) para correção de brilho, aprofundando os tons escuros (remoção de névoa) e expandindo o alcance dinâmico (luzes).
+* **[4] Nitidez (Unsharp Masking):** Isola e amplifica as altas frequências da imagem original para gerar micro-contraste nas bordas, aprimorando texturas de pedras e folhagens.
 
-Melhoria de Contraste: Aplica a técnica CLAHE (Equalização de Histograma Adaptativa). Esse filtro recupera detalhes visuais que ficam escondidos nas sombras do jogo, mas com uma supressão de altas luzes para evitar que o céu claro fique estourado na tela.
+O projeto conta também com um **HUD (On-Screen Display)** que exibe o status dos filtros ativos e uma telemetria de desempenho em tempo real (**FPS** e **Latência em ms**).
 
-Nitidez: O toque final utiliza a técnica de Unsharp Masking. O algoritmo realça as bordas e os contornos das texturas, dando o aspecto final de Alta Definição (HD) para o jogo.
+## 🛠️ Tecnologias Utilizadas
 
-Como Executar o Projeto
+* **Linguagem:** C++ (Standard 14+)
+* **Visão Computacional:** OpenCV 4.x
+* **Build System:** CMake
 
-Pré-requisitos:
-Para rodar este código no seu computador, você precisa ter um ambiente Linux configurado com o compilador C++ (GCC/G++), o CMake para gerenciar a compilação e a biblioteca OpenCV 4 instalada.
+## 💻 Como Compilar e Executar
 
-Passo a Passo:
+Certifique-se de ter o compilador C++, CMake e a biblioteca OpenCV instalados e configurados no seu ambiente Linux.
 
-Primeiro, clone o repositório para a sua máquina através do terminal usando o link do projeto.
+**1. Clone o repositório:**
+    git clone https://github.com/seu-usuario/seu-repositorio.git
+    cd seu-repositorio
 
-Segundo, você precisará ter o vídeo original baixado. Abra o arquivo main.cpp no seu editor e altere o caminho de diretório indicado na função VideoCapture para o local exato onde o vídeo está salvo no seu computador.
+**2. Compile o projeto:**
+Você pode abrir a pasta diretamente na sua IDE (como o CLion) ou compilar via terminal:
+    mkdir build
+    cd build
+    cmake ..
+    make
 
-Terceiro, abra o terminal na pasta raiz do projeto, crie uma pasta chamada build e rode o comando do CMake para preparar os arquivos. Depois, rode o comando Make para compilar o código.
+**3. Configuração do Vídeo:**
+Certifique-se de que o arquivo `VideoSOTC.mp4` está no caminho correto configurado no arquivo `main.cpp` antes da execução.
 
-Por fim, basta executar o arquivo final gerado no terminal para ver a interface abrindo com a comparação do antes e depois rodando na tela.
+**4. Execute a Engine:**
+    ./TrabalhoFinal
+
+## ⌨️ Controles em Tempo Real
+
+Com a janela de vídeo em foco, utilize as seguintes teclas para interagir com a Engine:
+
+| Tecla | Ação |
+| :---: | :--- |
+| `1` | Ativa/Desativa Filtro de Ruído |
+| `2` | Ativa/Desativa Expansão de Cores |
+| `3` | Ativa/Desativa Contraste Cinemático |
+| `4` | Ativa/Desativa Nitidez (Unsharp Mask) |
+| `5` | **ATIVAR PIPELINE COMPLETO** (Todos os filtros) |
+| `0` | **DESLIGAR PIPELINE** (Retorna ao vídeo original) |
+| `ESC` | Encerra a aplicação com segurança |
+
+---
+*Desenvolvido como Trabalho Final para a disciplina de Processamento de Imagens.*
