@@ -15,6 +15,7 @@ void exibirMenu() {
     cout << " [4] - Nitidez\n";
     cout << " [5] - ATIVAR TUDO \n";
     cout << " [0] - DESLIGAR TUDO  \n";
+    cout << " [S] - Salvar Imagem\n";
     cout << " [ESC] - Sair\n";
     cout << "=============================================\n";
 }
@@ -90,6 +91,10 @@ int main() {
         else if (key == '4') apNitidez = !apNitidez;
         else if (key == '5') apRuido = apCores = apContraste = apNitidez = true;
         else if (key == '0') apRuido = apCores = apContraste = apNitidez = false;
+        else if (key == 's' || key == 'S') {
+            imwrite("resultado_processado.jpg", frameFinal);
+            cout << "[SISTEMA] Imagem capturada e salva como resultado_processado.jpg" << endl;
+        }
     }
     video.release();
     destroyAllWindows();
